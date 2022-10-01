@@ -1,0 +1,4 @@
+discord==1.7.3
+discord.py==1.7.3
+psutil==5.9.1
+myjdapi==1.1.6
