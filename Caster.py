@@ -5,8 +5,10 @@ import myjdapi
 import time
 from JSONLoader import getJSONFile
 
-data = getJSONFile("Calem.json")
-os.system("mkdir Source")
+PJPATH = "/home/pi/Documents"
+SRCPATH = "{}/Source".format(PJPATH)
+os.system("mkdir {}".format(SRCPATH))
+data = getJSONFile("EXMAPLE.json")
 TOKEN = data["BOT_TOKEN"]
 JKEYS = data["JKEYS"]
 EMAIL = data["EMAIL"]
@@ -19,8 +21,16 @@ class Bot(discord.Client):
         self.pureMessage = ""
         self.__jd = myjdapi.Myjdapi()
         self.__jd.set_app_key(JKEYS)
-        self.__jd.connect(EMAIL, LOGIN)
-        self.device = self.__jd.get_device(device_id="EXAMPLE")
+
+        # Wait for JDownloader to start
+        while 1:
+            try:
+                self.__jd.connect(EMAIL, LOGIN)
+                self.device = self.__jd.get_device(device_name="EXAMPLE@EXAMPLE")
+                break
+            except:
+                time.sleep(1)
+
         super().__init__()
 
     # Signalize startup
@@ -63,7 +73,7 @@ class Bot(discord.Client):
                     os.system("rm {}".format(file))
                     os.system("wget {}".format(url))
                 else:
-                    os.system("wget {} -P Source".format(url))
+                    os.system("wget {} -P {}".format(url, SRCPATH))
                 await message.channel.send("Download erfolgreich!")
             except:
                 await message.channel.send("Datei konnte nicht geladen werden (vielleicht zu groß?).")
@@ -76,7 +86,7 @@ class Bot(discord.Client):
             except:
                 await message.channel.send("Du hast vergessen mir einen Titel zu nennen!")
 
-            mediaList = os.listdir("Source")
+            mediaList = os.listdir(SRCPATH)
             mediaDict = {}
 
             for media in mediaList:
@@ -84,16 +94,16 @@ class Bot(discord.Client):
                 mediaDict[".".join(parts[:-1]).lower()] = parts[-1]
 
             try:
-                os.system("rm -rf Source/{}.{}".format(deleteMedia, mediaDict[deleteMedia]))
+                os.system("rm -rf {}/{}.{}".format(SRCPATH, deleteMedia, mediaDict[deleteMedia]))
                 await message.channel.send("Ich habe {} gelöscht!".format(vanilla))
             except:
                 await message.channel.send("Ich konnte {} nicht finden!".format(vanilla))
 
 
-        # Delete locally saved media
+        # Rename locally saved media
         elif initTerm in ["änder", "ändere", "ändern", "umändern", "umbenennen", "neubenennen", "umbenenn", "name",
                           "mach", "mache"]:
-            mediaList = os.listdir("Source")
+            mediaList = os.listdir(SRCPATH)
             mediaDict = {}
 
             for media in mediaList:
@@ -116,14 +126,14 @@ class Bot(discord.Client):
                 fmt = mediaDict[oldNameIntern]
                 newName = splitMessage[newNameFirstIndex:]
                 newInternName = "___".join(splitMessage[newNameFirstIndex:]).lower()
-                os.system("mv Source/{}.{} Source/{}.{}".format(oldNameIntern, fmt, newInternName, fmt))
+                os.system("mv {}/{}.{} {}/{}.{}".format(SRCPATH, oldNameIntern, fmt, SRCPATH, newInternName, fmt))
                 await message.channel.send("\"{}\" wurde in \"{}\" umbenannt!".format(oldName, newName))
             except:
                 await message.channel.send("Es ist ein Fehler aufgetreten! Schreib \"Hilfe\" und lies dir am besten \
                                            nochmal durch, wie du Videos umbenennen kannst. :)")
 
 
-        # Get youtube video
+        # Get youtube video TODO: Add support to shutdown after complete downloads
         elif initTerm in ["lade", "lad", "speicher", "ziehe", "zieh", "runterladen"]:
             try:
                 link = splitMessage[1]
@@ -141,10 +151,15 @@ class Bot(discord.Client):
             name    = ""
 
             await message.channel.send("Ich lade jetzt das Video...")
+            
+            # Wait for query links to appear in the linkgrabber
             while not len(self.device.linkgrabber.query_links()):
                 time.sleep(1)
+
+            # TODO: Add support for more video formats
+            # Find .mp4 files in the potential link mess
             for lem in self.device.linkgrabber.query_links():
-                name = lem["name"] if ".mp4" in lem["name"] else  name
+                name = lem["name"] if ".mp4" in lem["name"] else name  # name contains ".mp4"?
                 try:
                     if "MP4" in lem["variant"]["name"] or "mp4" == lem["name"].split(".")[-1]:
                         vid_ids.append(lem["uuid"])
@@ -155,30 +170,35 @@ class Bot(discord.Client):
                 except:
                     cleanup.append(lem["uuid"])
 
-            self.device.linkgrabber.cleanup(mode="REMOVE_LINKS_ONLY", 
+            # Clean the linkgrabber
+            self.device.linkgrabber.cleanup(mode="REMOVE_LINKS_ONLY",
                 selection_type="SELECTED", link_ids=cleanup, action="DELETE_ALL")
 
-            try:
+            try: # Start the download
                 self.device.linkgrabber\
                     .move_to_downloadlist(link_ids=vid_ids, package_ids=pkg_ids)
+
+                # Wait for downloads to finish
                 while len(self.device.downloads.query_links()):
                     time.sleep(1)
+
+                # Rename downloaded video TODO: Add more video formats here too
                 if len(splitMessage) > 3:
                     newName = " ".join(splitMessage[3:]).replace(" ", "___").lower()
-                    os.system("mv Source/\"{}\" Source/\"{}\".mp4".format(name, newName))
+                    os.system("mv {}/\"{}\" {}/\"{}\".mp4".format(SRCPATH, name, SRCPATH, newName))
                 await message.channel.send("Fertig!")
             except:
                 await message.channel.send("Kein gültiger Video link!")
 
 
-        # Play a video
-        elif initTerm in ["spiele", "spiel", "starte", "start", "zeige", "nimm"]:
+        # Play a video TODO: Add loop function
+        elif initTerm in ["spiele", "spiel", "starte", "start", "zeige", "nimm", "play", "öffne"]:
             try:
                 media = "___".join(splitMessage[1:]).lower()
             except:
                 await message.channel.send("Du hast vergessen mir zu sagen, welches Video ich starten soll!")
 
-            mediaList = os.listdir("Source")
+            mediaList = os.listdir(SRCPATH)
             mediaDict = {}
 
             for m in mediaList:
@@ -187,17 +207,18 @@ class Bot(discord.Client):
 
             name = "{}.{}".format(media, mediaDict[media])
             await message.channel.send("Das Video wird gleich starten!")
-            os.system("vlc Source/\"{}\" --play-and-exit".format(name))
+            #os.system("vlc Source/\"{}\" --play-and-exit".format(name))
+            subprocess.Popen(["nohup vlc -Z {}/{} --play-and-exit &".format(SRCPATH, name)], shell=True)
 
 
-        # Stream a video
+        # Stream a video TODO
         elif initTerm in ["stream", "streame", "live", "streamen"]:
-            print() #TODO
+            print() 
 
 
-        # Check how many Tweets are remaining and what scripts are available
-        elif initTerm in ["liste", "videos", "filme", "serien"]:
-            mediaList = os.listdir("Source")
+        # Return list of playable videos
+        elif initTerm in ["liste", "videos", "filme", "serien", "sammlung", "downloads", "medien"]:
+            mediaList = os.listdir(SRCPATH)
             mediaDict = {}
 
             for media in mediaList:
@@ -211,7 +232,60 @@ class Bot(discord.Client):
                 await message.channel.send("Ich habe aktuell keine Medien für dich gespeichert!")
 
 
-        # Edit autostart scripts
+        # Stop the video
+        elif initTerm in ["warte", "halt", "stopp", "stop", "stoppe", "pause", "pausiere", "pausieren"]:
+            # Find PID of the vlc player
+            outputShards = []
+            os.system("ps -e | grep vlc > end.txt") 
+            try:
+                with open("end.txt", 'r') as file:
+                    outputShards = file.read().split(" ")
+                for entry in outputShards:
+                    if entry != "":
+                        os.system("kill -STOP {}".format(entry))
+                        break
+                await message.channel.send("Ich habe das Video angehalten!")
+            except:
+                 await message.channel.send("Ich konnte kein laufendes Video finden!")
+            os.system("rm end.txt")
+
+        
+        # Continue the video
+        elif initTerm in ["weiter", "los", "fortfahren", "fahre", "fortführen", "mach"]:
+            # Find PID of the vlc player
+            outputShards = []
+            os.system("ps -e | grep vlc > end.txt")
+            try:
+                with open("end.txt", 'r') as file:
+                    outputShards = file.read().split(" ")
+                for entry in outputShards:
+                    if entry != "":
+                        os.system("kill -CONT {}".format(entry))
+                        break
+                await message.channel.send("Weiter geht's!")
+            except:
+                 await message.channel.send("Ich konnte kein laufendes Video finden!")
+            os.system("rm end.txt")
+
+
+        # Kill the video
+        elif initTerm in ["end", "ende", "schluss", "beende", "beenden", "aufhören", "hör", "schließen", "schließe"]:
+            outputShards = []
+            os.system("ps -e | grep vlc > end.txt")
+            try:
+                with open("end.txt", 'r') as file:
+                    outputShards = file.read().split(" ")
+                for entry in outputShards:
+                    if entry != "":
+                        os.system("kill {}".format(entry))
+                        break
+                await message.channel.send("Ich habe das Video beendet!")
+            except:
+                 await message.channel.send("Ich konnte kein laufendes Video finden!")
+            os.system("rm end.txt")
+
+
+        # Edit autostart scripts TODO: Update newbash
         elif initTerm == "$inject":
             scripts = str(message.content).split(" ")[1:]
             os.system("cp .bashrc newbash")
@@ -223,21 +297,28 @@ class Bot(discord.Client):
             await message.channel.send("Autostart scripts changed!")
 
 
-        # Reboot to take changes into effect
-        elif initTerm in ["$r", "neustart", "reboot", "aus"]:
+        # Poweroff
+        elif initTerm in ["aus", "poweroff", "shutdown", "schlafen"]:
+            await message.channel.send("Hab bitte einen Moment Geduld, ich bin gleich wieder da!")
+            os.system("sudo poweroff")
+
+
+        # Reboot
+        elif initTerm in ["$r", "neustart", "reboot"]:
             await message.channel.send("Hab bitte einen Moment Geduld, ich bin gleich wieder da!")
             os.system("sudo reboot")
 
 
-        elif initTerm == "$status":
+        # Return a status report
+        elif initTerm in ["$s", "$status"]:
             await message.channel.send("Total: {}GB; Used: {}GB, Free: {}GB; Percent: {}%".format(round(space.total / (2**30), 3),
                                                                                             round(space.used / (2**30), 3),
                                                                                             round(space.free / (2**30), 3),
                                                                                             space.percent))
 
 
-        # Get help response
-        elif initTerm == "hilfe":
+        # Get help response TODO: Update text
+        elif initTerm == ["h", "hilfe", "help"]:
             try:
                 with open("HelpText.txt", 'r') as file:
                     text = file.read()
