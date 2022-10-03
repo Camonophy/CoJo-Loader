@@ -2,7 +2,7 @@ import os
 from JSONLoader import getJSONFile
 import discord
 
-discordData = getJSONFile("DiscordKeys.json")
+discordData = getJSONFile("Calem.json")
 os.system("mkdir Source")
 TOKEN = discordData["BOT_TOKEN"]
 
