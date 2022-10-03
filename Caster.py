@@ -307,7 +307,7 @@ class Bot(discord.Client):
             await self._rename_videos(message, splitMessage, keyword)
 
 
-        elif initTerm in ["list", "liste", "videos", "filme", "serien", "sammlung", "downloads", "medien"]:
+        elif keyword in ["list", "liste", "videos", "filme", "serien", "sammlung", "downloads", "medien"]:
             await self._list_videos(message)
 
 
