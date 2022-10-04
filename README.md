@@ -1,4 +1,7 @@
 # CoJo-Loader
+
+![Coraline](Title.png?raw=true "")
+
 Low key application to download, manage and play videos from _any_ URL source.
 Primarily designed to run on RaspberryPi 3 or higher with Pi-OS, it can turn your Pi into a Google Chromecast kinda device, but focusing more on functionality than proprietary.
 
