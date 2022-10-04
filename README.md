@@ -15,7 +15,7 @@ This application is supposed to be controlled remotely via your own <a href="htt
 
 ### Guide
 First you have to <a href="https://www.raspberrypi.com/software/">set up your Raspberry Pi</a>. 
-Just to be sure: Run
+Just to be sure run:
 
 ```sh
 sudo apt update && sudo apt upgrade -y && sudo apt install openjdk-11-jre openjdk-11-jdk vlc 
