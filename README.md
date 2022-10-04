@@ -5,7 +5,7 @@ Primarily designed to run on RaspberryPi 3 or higher with Pi-OS, it can turn you
 ## Installation
 ### Disclaimer
 This guide is based on the Pi-OS64 with desktop (*not* the lite version). If you choose to pick any other Linux distribution, especially a non Debian based one, chances are that you will encounter minor issues (minor at best). 
-In that case, you need to rely on your own skill to navigate through each step and adapt them to your setup!
+In that case, you need to rely on your own skill to navigate through each step and adapt them to your individual setup!
 
 ### Discord
 This application is supposed to be controlled remotely via your own <a href="https://discord.com/developers">Discord bot</a>. I would suggest to create a new Discord server whose only purpose it is to interact with your bot. Please provide CoJo-Loader the informations about your server and your your bot by replacing the **EXAMPLE** placeholder in _Calem.json_ with the corresponding keys.
