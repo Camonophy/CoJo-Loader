@@ -20,7 +20,7 @@ sudo apt update && sudo apt upgrade -y && sudo apt install openjdk-11-jre openjd
 
 after booting up your Pi for the first time. 
 Next we need a convenient tool to download videos from any given URL. Luckily, JDownloader seems just right for this job (at least for me). They even provide a pretty easy-to-use installation script  on their <a href="https://jdownloader.org/download/index">official webpage</a> (_JDownloader does not seem to work with Pi-Zero and any Pi Version below 2_). 
-You can run the script by running the following command in the same directory as the script:
+You can run the script by typing the following command in the same directory as the script:
 
 ```sh
 sh JDownloader2Setup_unix_nojre.sh
