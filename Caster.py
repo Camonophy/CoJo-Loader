@@ -6,8 +6,8 @@ import time
 from JSONLoader import getJSONFile
 
 PJPATH = "/home/pi/Documents"
-SRCPATH = "{}/Source".format(PJPATH)
-os.system("mkdir {}".format(SRCPATH))
+SRCPATH = "{PJPATH}/Source"
+os.system("mkdir {SRCPATH}")
 data = getJSONFile("EXMAPLE.json")
 TOKEN = data["BOT_TOKEN"]
 JKEYS = data["JKEYS"]
@@ -53,10 +53,10 @@ class Bot(discord.Client):
             mediaDict[".".join(parts[:-1]).lower()] = parts[-1]
 
         try:
-            os.system("rm -rf {}/{}.{}".format(SRCPATH, deleteMedia, mediaDict[deleteMedia]))
-            await message.channel.send("Ich habe {} gelöscht!".format(vanilla))
+            os.system(f"rm -rf {SRCPATH}/{deleteMedia}.{mediaDict[deleteMedia]}")
+            await message.channel.send(f"Ich habe {vanilla} gelöscht!")
         except:
-            await message.channel.send("Ich konnte {} nicht finden!".format(vanilla))
+            await message.channel.send(f"Ich konnte {vanilla} nicht finden!")
 
 
     # Return list of playable videos
@@ -70,28 +70,31 @@ class Bot(discord.Client):
 
         if mediaList:
             mediaListText = "\n".join(mediaDict.keys())
-            await message.channel.send("Folgende Medien hab ich für dich gespeichert:\n{}".format(mediaListText))
+            await message.channel.send(f"Folgende Medien hab ich für dich gespeichert:\n{mediaListText}")
         else:
             await message.channel.send("Ich habe aktuell keine Medien für dich gespeichert!")
 
 
-    # Download attachment from message message  
+    # Download attachment from message
     async def _load_attachments(self, message):
         try:
             url = str(message.attachments).split('=')[3].split('\'')[1]
             dataFormat = url.split('.')[-1]
+            file = url.split("/")[-1]
             if dataFormat == "py":
-                file = url.split("/")[-1]
-                os.system("rm {}".format(file))
-                os.system("wget {}".format(url))
+                os.system(f"rm {file}")
+                os.system(f"wget {url}")
             else:
-                os.system("wget {} -P {}".format(url, SRCPATH))
+                if self.message.content:
+                     os.system(f"wget {url} && mv {file} {SRCPATH}/{self.message.content}")
+                else:
+                     os.system(f"wget {url} -P {SRCPATH}")
             await message.channel.send("Download erfolgreich!")
         except:
             await message.channel.send("Datei konnte nicht geladen werden (vielleicht zu groß?).")
 
 
-    # Get youtube video TODO: Add support to shutdown after complete downloads    
+    # Get youtube video TODO: Add support to shutdown after complete downloads
     async def _load_videos(self, message, splitMessage: str, keyword: str):
         try:
             link = splitMessage[1]
@@ -112,12 +115,12 @@ class Bot(discord.Client):
         while not len(self.device.linkgrabber.query_links()):
             time.sleep(1)
 
-        # TODO: Add support for more video formats
         # Find .mp4 files in the potential link mess
         for lem in self.device.linkgrabber.query_links():
-            name = lem["name"] if ".mp4" in lem["name"] else name  # name contains ".mp4"?
+            # lem contains suiting file format?
+            name = lem["name"] if any([fmt in lem["name"] for fmt in FORMATS]) else name
             try:
-                if "MP4" in lem["variant"]["name"] or "mp4" == lem["name"].split(".")[-1]:
+                if lem["variant"]["name"].lower() in FORMATS or lem["name"].split(".")[-1] in FORMATS:
                     vid_ids.append(lem["uuid"])
                     if lem["packageUUID"] not in pkg_ids:
                         pkg_ids.append(lem["packageUUID"])
@@ -126,27 +129,36 @@ class Bot(discord.Client):
             except:
                 cleanup.append(lem["uuid"])
 
+        print(vid_ids)
+
         # Clean the linkgrabber
         self.device.linkgrabber.cleanup(mode="REMOVE_LINKS_ONLY",
             selection_type="SELECTED", link_ids=cleanup, action="DELETE_ALL")
 
+        if name == "":
+            await message.channel.send("Kein Video im Link gefunden!")
+
         try: # Start the download
             self.device.linkgrabber.move_to_downloadlist(link_ids=vid_ids, package_ids=pkg_ids)
+
+            # Play loading screen
+            subprocess.Popen([f"nohup vlc -Z {PJPATH}/Loading.mp4 --play-and-exit --loop &"], shell=True)
 
             # Wait for downloads to finish
             while len(self.device.downloads.query_links()):
                 time.sleep(1)
 
-            # Rename downloaded video TODO: Add more video formats here too
+            # Rename downloaded video
             if len(splitMessage) > 3:
                 newName = " ".join(splitMessage[3:]).replace(" ", "___").lower()
-                os.system("mv {}/\"{}\" {}/\"{}\".mp4".format(SRCPATH, name, SRCPATH, newName))
-            await message.channel.send("Dein Video \"{}\" ist fertig geladen!".format(name))
+                os.system(f"mv {SRCPATH}/\"{name}\" {SRCPATH}/\"{newName}\".{name.split('.')[-1]}")
+            await self._manage_open_video(message, 2)
+            await message.channel.send(f"Dein Video \"{name}\" ist fertig geladen!")
         except:
             await message.channel.send("Kein gültiger Video link!")
 
 
-    # Stop, continue or kill a video
+    # Stop (0), continue (1) or kill (2) a video 
     async def _manage_open_video(self, message, signal: int):
         # Find PID of the vlc player
         outputShards = []
@@ -159,10 +171,10 @@ class Bot(discord.Client):
             for entry in outputShards:
                 if entry != "":
                     if signal == 2:
-                        os.system("kill -CONT {}".format(entry))
-                        os.system("kill {}".format(entry))
+                        os.system(f"kill -CONT {entry}")
+                        os.system(f"kill {entry}")
                     else:
-                        os.system("kill {} {}".format(flag[signal], entry))
+                        os.system(f"kill {flag[signal]} {entry}")
                     break
             await message.channel.send(response[signal])
         except:
@@ -184,12 +196,12 @@ class Bot(discord.Client):
             parts = m.split(".")
             mediaDict[".".join(parts[:-1])] = parts[-1]
 
-        name = "{}.{}".format(media, mediaDict[media])
+        name = f"{media}.{mediaDict[media]}"
         await message.channel.send("Das Video wird gleich starten!")
         if keyword in ["loop", "loope", "wiederhole", "wiederhol", "🔃", "🔄", "🔁"]:
-            subprocess.Popen(["nohup vlc -Z {}/{} --play-and-exit --loop &".format(SRCPATH, name)], shell=True)
+            subprocess.Popen([f"nohup vlc -Z {SRCPATH}/{name} --play-and-exit --loop &"], shell=True)
         else:
-            subprocess.Popen(["nohup vlc -Z {}/{} --play-and-exit &".format(SRCPATH, name)], shell=True)
+            subprocess.Popen([f"nohup vlc -Z {SRCPATH}/{name} --play-and-exit &"], shell=True)
 
 
     # Rename locally saved media
@@ -210,23 +222,18 @@ class Bot(discord.Client):
             for word in wordBlob:
                 if oldNameIntern in mediaDict.keys():
                     break
-                oldName = "{} {}".format(oldName, word)
-                oldNameIntern = "{}___{}".format(oldNameIntern, word.lower())
+                oldName = f"{oldName} {word}"
+                oldNameIntern = f"{oldNameIntern}___{word.lower()}"
                 newNameFirstIndex += 1
 
             fmt = mediaDict[oldNameIntern]
             newName = splitMessage[newNameFirstIndex:]
             newInternName = "___".join(splitMessage[newNameFirstIndex:]).lower()
-            os.system("mv {}/{}.{} {}/{}.{}".format(SRCPATH, oldNameIntern, fmt, SRCPATH, newInternName, fmt))
-            await message.channel.send("\"{}\" wurde in \"{}\" umbenannt!".format(oldName, newName))
+            os.system(f"mv {SRCPATH}/{oldNameIntern}.{fmt} {SRCPATH,}/{newNameIntern}.{fmt}")
+            await message.channel.send(f"\"{oldName}\" wurde in \"{newName}\" umbenannt!")
         except:
             await message.channel.send("Es ist ein Fehler aufgetreten! Schreib \"Hilfe\" und lies dir am besten \
                                         nochmal durch, wie du Videos umbenennen kannst.")
-
-
-    # Stream a video TODO
-    async def _stream_videos(self, message, splitMessage: str, keyword: str):
-        print("TODO")
 
 
     # Respond to a message
@@ -234,6 +241,8 @@ class Bot(discord.Client):
 
         if message.author == self.user:     # Own message; do nothing
             return
+
+        print(message.content)
 
         # Check for available disk space
         space = psutil.disk_usage("/")
@@ -293,15 +302,15 @@ class Bot(discord.Client):
 
 
         # Emoji: WiFi-Button
+        # Deprecated: Does not seem feasible; play a local video instead
         elif keyword in ("stream", "streame", "live", "streamen", "📶"):
-            await self._stream_videos(message, splitMessage, keyword)
+            await self._play_videos(message, splitMessage, keyword)
 
 
         elif keyword in ("lösche", "lösch", "entferne", "entfern"):
             await self._delete_videos(message, splitMessage, keyword)
 
 
-        
         elif keyword in ("änder", "ändere", "ändern", "umändern", "umbenennen", 
                          "neubenennen", "umbenenn", "name", "mach", "mache"):
             await self._rename_videos(message, splitMessage, keyword)
@@ -311,15 +320,15 @@ class Bot(discord.Client):
             await self._list_videos(message)
 
 
-        # Edit autostart scripts TODO: Update newbash
+        # Edit autostart scripts
         elif keyword == "$inject":
             scripts = str(message.content).split(" ")[1:]
-            os.system("cp .bashrc newbash")
-            with open("newbash", 'a') as file:
+            os.system("cp updateProfile .profile")
+            with open(".profile", 'a') as file:
                 file.write("\n")
                 for script in scripts:
-                    file.write("nohup python3 {}.py & \n".format(script))
-            os.system("cp newbash ~/.bashrc")
+                    file.write(f"nohup python3 {script}.py & \n")
+            os.system("cp .profile ~/.profile")
             await message.channel.send("Autostart scripts changed!")
 
 
@@ -337,10 +346,10 @@ class Bot(discord.Client):
 
         # Return a status report
         elif keyword in ("$s", "$status"):
-            await message.channel.send("Total: {}GB; Used: {}GB, Free: {}GB; Percent: {}%".format(round(space.total / (2**30), 3),
-                                                                                            round(space.used / (2**30), 3),
-                                                                                            round(space.free / (2**30), 3),
-                                                                                            space.percent))
+            await message.channel.send(f"Total: {round(space.total / (2**30), 3)}GB; \
+                                         Used: {round(space.used / (2**30), 3)}GB, \
+                                         Free: {round(space.free / (2**30), 3)}GB; \
+                                         Percent: {space.percent}%")
 
 
         # Get help response TODO: Update text
