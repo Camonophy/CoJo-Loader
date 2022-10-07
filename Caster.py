@@ -20,6 +20,7 @@ class Bot(discord.Client):
     def __init__(self):
         self.__jd = myjdapi.Myjdapi()
         self.__jd.set_app_key(JKEYS)
+        self.__channel = 0
 
         # Wait for JDownloader to start
         while 1:
@@ -34,7 +35,14 @@ class Bot(discord.Client):
 
     # Signalize startup
     async def on_ready(self):
-        print(f'{self.user} has connected to Discord!')
+        try:
+            id = int(self.guilds[0].text_channels[0].id)
+            self.__channel = self.get_channel(id)
+            await self.__channel.send("Ich bin bereit!")
+            print(f"{self.user} has connected to Discord!")
+        except:
+            print(f"No default text channel to join found!")
+            exit()
 
 
     # Delete locally saved media
