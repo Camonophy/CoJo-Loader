@@ -1,19 +1,28 @@
 Ich helfe dir gern! Schreib einfach "Hilfe" und ich werde dir eine Übersicht über meine Funktionen geben:
 
-Wenn du eine Datei an deine Nachricht anhängst, werde ich immer versuchen, diesen Inhalt zu speichern. Solltest du noch einen Text in der selben Nachricht verfassen, werde ich diesen ignorieren.
+Wenn du eine Datei an deine Nachricht anhängst, werde ich immer versuchen, diesen Inhalt zu speichern. Solltest du noch einen Text in der selben Nachricht verfassen, werde ich diesen als Videonamen verwenden.
 
-Möchtest du eine Liste mit deinen bisher gespeicherten Medien haben, dann schreib "Liste" in den Chat.
+Möchtest du eine Liste mit deinen bisher gespeicherten Medien haben? Dann schreib "Liste" in den Chat.
 
 Als erstes kannst du Videos laden, indem du z.B "Lade" oder "Speicher", gefolgt vom Videolink schreibst. Optional kann du auch das Video direkt einen eigenen Namen geben, wenn du "als" und den neuen Videotitel dazu schreibst.
-Beispiel: "Lade https://youtu.be/BlahBlahBlah" oder "Lade https://youtu.be/BlahBlahBlah als HoneyMoon"
+Beispiel: "Lade https://youtu.be/BlahBlahBlah"
+Beispiel: "Speicher https://youtu.be/BlahBlahBlah als HoneyMoon"
 
 Du kannst Videos abspielen, indem du z.B. "Spiele" oder "Starte" und den Namen des Videos in den Chat schreibst.
 Beispiel: "Spiele HoneyMoon"
 
-Soll ich etwas davon löschen, dann schreib z.B. "Lösche" oder "Entferne", gefolgt vom Namen des Videos.
+Falls du ein Video loopen möchtest, dann geht das fast so ähnlich: Schreibe einfach "loop" anstatt "lade".
+Beispiel: "Loop HoneyMoon"
+
+Laufende Videos kannst du managen, indem du Begriffe wie "Stop", "Pause", "Weiter", "Beende" oder "Schließen" zum Pausieren, Fortfahren oder Beenden von Video schreibst.
+
+Soll ich ein Video löschen, dann schreib z.B. "Lösche" oder "Entferne", gefolgt vom Namen des Videos.
 Beispiel: "Lösche HoneyMoon"
 
-Außerdem kannst du Videos umbenennen, wenn du z.B. "Ändere"/"Umbenennen", den alten Namen, "zu"/"in" und den neuen Namen schreibst.
-Beispiel: "Ändere HoneyMoon zu Candy" oder "Umbenennen HoneyMoon in Candy"
+Außerdem kannst du Videos umbenennen, wenn du z.B. "Ändere" oder "Umbenennen", den alten Namen, "zu" oder "in" und den neuen Namen schreibst.
+Beispiel: "Ändere HoneyMoon zu Candy"
+Beispiel: "Umbenennen HoneyMoon in Candy"
 
 Falls irgendwas mal nicht stimmen sollte, kannst du mich mit "Neustart" resetten.
+
+Solltest du mich schlafen legen solle, dann schreib "aus" in den Chat.
