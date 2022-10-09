@@ -126,9 +126,6 @@ class Bot(discord.Client):
 
         await self.__channel.send("Ich lade jetzt das Video...")
 
-        # Play loading screen
-        subprocess.Popen([f"nohup vlc -Z {PJPATH}/Loading.mp4 --play-and-exit --loop &"], shell=True)
-
         # Wait for linkgrabber to collect all sources
         while self.device.linkgrabber.is_collecting():
             time.sleep(1)
@@ -148,7 +145,6 @@ class Bot(discord.Client):
         # No downloadable video found
         if not len(pkg_vid_id_dict):
             await self.__channel.send("Kein Video im Link gefunden!")
-            await self._manager_open_video(2, False)
             self.device.linkgrabber.clear_list()
             return
 
@@ -163,8 +159,6 @@ class Bot(discord.Client):
             # Wait for downloads to finish
             while self.device.downloadcontroller.get_current_state() == "RUNNING":
                 time.sleep(1)
-
-            await self._manage_open_video(2, False)
 
             # Rename downloaded video
             if len(names) > 1:       # Multiple videos
