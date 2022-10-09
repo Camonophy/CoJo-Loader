@@ -148,6 +148,7 @@ class Bot(discord.Client):
         # No downloadable video found
         if not len(pkg_vid_id_dict):
             await self.__channel.send("Kein Video im Link gefunden!")
+            await self._manager_open_video(2, False)
             self.device.linkgrabber.clear_list()
             return
 
@@ -188,6 +189,7 @@ class Bot(discord.Client):
         
         except: await self.__channel.send("Kein gültiger Videolink!")
         self.device.linkgrabber.clear_list()
+        self.downloads.linkgrabber.cleanup(action="DELETE_ALL", mode="REMOVE_LINKS_AND_DELETE_FILES", selection_type="ALL")
 
 
     # Stop (0), continue (1) or kill (2) a video 
@@ -415,6 +417,12 @@ class Bot(discord.Client):
             except:
                 await self.__channel.send("Es ist ein Fehler aufgetreten! HILFEEE!")
 
+        # Remove potential junk files
+        srcFiles = os.listdir(SRCPATH)
+        for item in srcFiles:
+            if item.split(".")[-1] not in FORMATS or " " in item:
+                os.system(f"rm {SRCPATH}/item")
+                
         else:
             await self.__channel.send(":)")
 
